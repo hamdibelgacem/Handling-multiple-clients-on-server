@@ -1,10 +1,14 @@
-#include <iostream>
+
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
-#include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros  
+#include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros
+
+#include <iostream>
+#include <sstream>
+
 
 const int PORT = 54000;
 
@@ -142,18 +146,6 @@ int main() {
                 //incoming message
                 memset(buffer, 0, 4096);
                 int bytesIn = recv(sd, buffer, 4096, 0);
-                // if ((valread = read( sd , buffer, 4096)) == 0)   
-                // {   
-                //     //Somebody disconnected , get his details and print  
-                //     getpeername(sd , (sockaddr*)&address, (socklen_t*)&addrlen);
-                //     cout << "Host disconnected, ip " << inet_ntoa(address.sin_addr) 
-                //          << ", port " << ntohs(address.sin_port) << endl;
-                         
-                //     //Close the socket and mark as 0 in list for reuse  
-                //     close( sd );   
-                //     client_socket[i] = 0;   
-                // }   
-
                 if(bytesIn <= 0) {
                     //Somebody disconnected , get his details and print  
                     getpeername(sd , (sockaddr*)&address, (socklen_t*)&addrlen);
@@ -163,17 +155,26 @@ int main() {
                     //Close the socket and mark as 0 in list for reuse  
                     close( sd );   
                     client_socket[i] = 0;
-
                 }
                      
                 //Echo back the message that came in  
                 else 
                 {   
+                    // Send message to other clients,
+                    for(int i = 0; i < max_clients; ++i) {
+                        int outSock = client_socket[i];
+                        if(outSock != master_socket && outSock != sd) {
+                            ostringstream ss;
+                            ss << "SOCKET #" << sd << ": " << buffer << "\r\n";
+                            string strOut = ss.str();
+
+                            send(outSock, strOut.c_str(), strOut.size() + 1, 0);
+                        }
+                    }
                     //set the string terminating NULL byte on the end  
-                    //of the data read  
-                    
-                    buffer[valread] = '\0'; 
-                    send(sd , buffer , strlen(buffer) , 0 );   
+                    //of the data read
+                    // buffer[valread] = '\0'; 
+                    // send(sd , buffer , strlen(buffer) , 0 );   
                 }   
             }   
         } 
