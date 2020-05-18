@@ -1,7 +1,12 @@
-#ifndef SOCKET_H
-#define SOCKET_H
+#pragma once
+
 #include <iostream>
 #include <sstream>
+#include <string>
+#include <algorithm>
+#include <map>
+#include <functional>
+#include <vector>
 
 #include <stdlib.h>
 #include <string.h>
@@ -13,7 +18,6 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-#include <vector>
 #include <sys/un.h>
 #include <errno.h>
 
@@ -32,19 +36,11 @@ public:
     int connect(string ip, string port);
     int listen(int max_queue);
     Socket* accept();
-    int socket_write(string msg);
-    int socket_read(string &buf,int len);
-    int socket_safe_read(string &buf,int len,int seconds);
-    int socket_writeTo(string msg, string ip, string port);
-    int socket_readFrom(string &buf, int len, string ip, string port);
     int socket_set_opt(int level, int optname, void* optval);
     int socket_get_opt(int level, int optname, void* optval);
     int set_blocking();
     int set_non_blocking();
     int socket_shutdown(int how);
     void close();
-    static int select(vector<Socket> *reads, vector<Socket> *writes, vector<Socket> *exceptions,int seconds);
-    static void handling_messages(vector<Socket> *reads, int master_socket);
     static string ipFromHostName(string hostname);
 };
-#endif

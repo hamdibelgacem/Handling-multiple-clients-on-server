@@ -1,9 +1,10 @@
 #include "HandleConnection.h"
 
+int Subscriber::count = 0;
 
 HandleConnection::HandleConnection(Socket *master) : masterSocket(master) {}
 
-int HandleConnection::select_client() {
+int HandleConnection::selectClient() {
 	struct timeval tv;
 	int secondes = 10; // set timeout 10 sec
 	tv.tv_sec = secondes;
@@ -11,8 +12,8 @@ int HandleConnection::select_client() {
 	int max_sd = masterSocket->sock;
 	FD_ZERO(&readfds); // initiailize my current set.
 	FD_SET(masterSocket->sock, &readfds); //add master socket to set
-	for(int i = 0; i < client_socket.size(); ++i) {
-		int sd = client_socket[i]; //socket descriptor
+	for(const auto &client : clients) {
+		int sd = client.get_socket(); //socket descriptor
 		
 		//if valid socket descriptor then add to read list  
 		if(sd > 0)   
@@ -34,44 +35,105 @@ int HandleConnection::select_client() {
 	return ret; 	
 }
 
-void HandleConnection::add_client() {
+void HandleConnection::disconnect() {
+	auto it = clients.begin();
+	while(it != clients.end()) {
+		it = find_if(it, clients.end(), [=](Subscriber s) { return s.get_socket() == 0; } );
+		// remove client
+		// todo : unsubscribe this client from the subscriber rooms
+		clients.erase(it);
+		it++;
+	}
+}
+
+void HandleConnection::addClient() {
 	//If something happened on the master socket ,  
 	//then its an incoming connection  
 	if (FD_ISSET(masterSocket->sock, &readfds))   
 	{   
 		Socket *newSocket = masterSocket->accept();
-	   
-		auto it = std::find(client_socket.begin(), client_socket.end(), 0);
-		if(it != client_socket.end()) // if position is empty
-			*it = newSocket->sock;
-		else
-			client_socket.push_back(newSocket->sock);
+		cout << "Socket ID : " << newSocket->sock << endl;
+		// Adding client to Clients list.
+		int socket = newSocket->sock;
+		Subscriber subscriber(socket);
+		clients.push_back(subscriber);
+		cout << "after push sub : " << endl;
+		for(auto client : clients)
+			cout << "Socket id " << client.get_socket() << "\t";
 	}	
 }
 
-void HandleConnection::split_commands(char *buffer) {
+void HandleConnection::subscribe(const std::vector<string> &params, Subscriber &client) {
+	cout << " ************ socket id in subscriber :" << client.get_socket() << endl;
+	for(auto param : params) {
+		if(!this->isRoomCreated(param)) {
+			this->addRoom(param);
+		} else {
+			cout<<"Room is created "<<param<<endl;
+		}
+		
+		auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == param;} );
+		cout << "-------- publisher in subscriber fun : " << it->Name() << endl;
+		if(it != rooms.end())
+			Subscribe(*it, client);
+	}
+	
+	cout << "Socket id after Subscribe_Pub-Sub ";
+	for(auto client : clients)
+		cout << "Socket id : " << client.get_socket() << "\t";
+	cout << endl;
+}
 
-	// handle client commands
-	using action_arguments = std::vector<std::string>;
-	std::map<std::string, std::function<bool(action_arguments const&)> > commands {
+void HandleConnection::echo(const std::vector<string> &params) {
+	auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == params[0];} );
+	cout<<"before Publish : "<<endl;
+	for(auto client : clients)
+		cout << "Socket id : " << client.get_socket() << "\t";
+	cout << "-------- publisher in echo func : " << it->Name() << endl;
+	it->Publish("12");
+	cout<<"after Publish"<<endl;
+			for(auto client : clients)
+			cout << "Socket id after publish: " << client.get_socket() << endl;	
+}
+
+void HandleConnection::handleCommand(const string &command, const std::vector<string> &params, Subscriber &client) {
+	/*std::map<std::string, std::function<bool(action_arguments const&)> > commands {
 		{"help", [&commands](action_arguments const&){
 			for(auto const& pair : commands) {std::cout << pair.first << '\n';}
 			return true;
 		}},
-		{"subscribe", [&commands](action_arguments const&){ std::cout << "subscribe" << std::endl; return true;} },
-		{"unsubscribe", [&commands](action_arguments const&){ std::cout << "unsubscribe" << std::endl; return true;} },
-		{"silence", [&commands](action_arguments const&){ std::cout << "silencee" << std::endl; return true;} },
-		{"sine", [&commands](action_arguments const&){ std::cout << "sine" << std::endl; return true;} },
-		{"echo", [&commands](action_arguments const&){ std::cout << "echo" << std::endl; return true;} }
-	};
+		{"subscribe", [&commands, params, client, this](action_arguments const&) { this->subscribe(params, client); return true; } },
+		{"unsubscribe", [&commands](action_arguments const&){ std::cout << "run unsubscribe" << std::endl; return true;} },
+		{"silence", [&commands](action_arguments const&){ std::cout << "run silencee" << std::endl; return true;} },
+		{"sine", [&commands](action_arguments const&){ std::cout << "run sine" << std::endl; return true;} },
+		{"echo", [&commands, params, this](action_arguments const&){ this->echo(params); return true;} }
+	};*/
 	
+	if(command == "subscribe") {
+		subscribe(params, client);
+	}
+	else if (command == "echo") {
+		echo(params);
+	}
+			for(auto client : clients)
+			cout << "Socket id after lambda: " << client.get_socket() << endl;
+	/*
+	auto what = commands.find(command);
+	if (what == commands.end()) {
+		std::cout << "command inconnue" << std::endl;
+    } else {
+		auto success = (what->second)(params);
+		std::cout << (success ? "success" : "failure") << std::endl;
+    }*/
+}
+
+void HandleConnection::splitCommands(char *buffer, string &command, std::vector<string> &params) {
+
+	// handle client commands
 	ostringstream ss;
 	ss << buffer;
     std::string input_string = ss.str();
-    
-	std::string command;
-	action_arguments params;
-	
+    	
 	vector<string> splits;
 	char delimiter = ' ';
 
@@ -89,28 +151,15 @@ void HandleConnection::split_commands(char *buffer) {
 	}
 
 	params.push_back(input_string.substr(i, min(pos, input_string.length()) - i + 1));        
-
-
-	std::cout << "command:" << command << "\t";
-	cout << "params: ";
-	for (auto const& p: params) std::cout << " " << p;
-	
-	auto what = commands.find(command);
-	if (what == commands.end()) {
-		std::cout << "command inconnue" << std::endl;
-    } else {
-		auto success = (what->second)(params);
-		std::cout << (success ? "success" : "failure") << std::endl;
-    }
 }
 
 void HandleConnection::receiveMessage() {
 	//some IO operation on some other socket 
 	char buffer[BUFSIZE];  //data buffer 
 	
-	for (int i = 0; i < client_socket.size(); ++i)   
+	for (auto &client : clients)   
 	{   
-		int sd = client_socket[i];
+		int sd = client.get_socket();
 			 
 		if (FD_ISSET( sd , &readfds))   
 		{   
@@ -119,30 +168,43 @@ void HandleConnection::receiveMessage() {
 			memset(buffer, 0, BUFSIZE);
 			int bytesIn = recv(sd, buffer, BUFSIZE, 0);
 			if(bytesIn <= 0) {
-				::close(sd);   
-				client_socket[i] = 0;
+				//::close(sd);   
+				//client.get_socket() = 0;
 			}
 				 
 			//Echo back the message that came in  
 			else 
 			{
-				for(int j = 0; j < client_socket.size(); ++j) {
-					int outSock = client_socket[j];
-					if(outSock != masterSocket->sock) {
-						/*
-						 * handle connection : 
-						 * split commands(command + params)
-						 * run commands (subscribe, unsubscribe, silnce, sine, echo)
-						 *  
-						 */
-						 split_commands(buffer);
-						 
-					}
-				} 
+				int outSock = client.get_socket();
+				if(outSock != masterSocket->sock) {
+					/*
+					 * handle connection : 
+					 * split commands(command + params)
+					 * run commands (subscribe, unsubscribe, silnce, sine, echo)
+					 *  
+					 */
+					std::string command;
+					action_arguments params;
+					splitCommands(buffer, command, params); // split command and params
+					
+					handleCommand(command, params, client); // check is valid command ?
+					
+					// 
+					for(auto client : clients)
+						cout << "Socket id after handleCommand: " << client.get_socket() << " ";
+					 
+				}
 			}   
 		}   
 	} 	
 	
 }
 
+void HandleConnection::addRoom(const string &name) {
+	rooms.push_back(Publisher(name));
+	cout << "Room " << name << " created" << endl;
+}
 
+bool HandleConnection::isRoomCreated(const string &name) {
+	return (find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == name;}) != rooms.end());
+}
