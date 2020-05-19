@@ -59,7 +59,7 @@ void HandleConnection::addClient() {
 void HandleConnection::subscribe(const std::vector<string> &params, Subscriber &client) {
 	for(const auto & param : params) {
 		if(!isRoomCreated(param)) {
-			cout << "------- room " << param << " is not created ------ " << param << endl;
+			cout << "------- room " << param << " is not created ------ " << endl;
 			addRoom(param);
 		} else {
 			cout<<"------- Room "<< param << " is created -------- "<<param<<endl;
@@ -67,23 +67,44 @@ void HandleConnection::subscribe(const std::vector<string> &params, Subscriber &
 		
 		auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == param;} );
 		if(it != rooms.end()) {
+			auto room = it->Name();
 			long token = Subscribe(*it, client);
-			std::map<string, long> pubTokens;
-			pubTokens.insert(make_pair(it->Name(), token));
-			for(map<string,long>::const_iterator eptr=pubTokens.begin();eptr != pubTokens.end(); eptr++)
+			cout << "Publisher name =" << room << " token = " << token << endl;
+			std::map<int, long> pubTokens;
+			pubTokens.insert(make_pair(client.getSocket(), token));
+			for(map<int,long>::const_iterator eptr=pubTokens.begin();eptr != pubTokens.end(); eptr++)
 				cout << "pubTokens : " << eptr->first << "  " << eptr->second << endl;
-			tokens.insert(make_pair(client.getSocket(), pubTokens));
+			
+			
+			if(tokens.find(room) != tokens.end()) {
+				tokens[room][client.getSocket()] = token;
+			}
+			tokens.insert(make_pair(it->Name(), pubTokens));
+			
+			cout << "=============== tokens in subscribe =============" << endl;
+			for( map<string, map<int,long> >::const_iterator it = tokens.begin(); it != tokens.end(); it++) {
+				cout << it->first << "  ";
+				for( map<int,long>::const_iterator it1 = it->second.begin(); it1 != it->second.end(); it1++){
+					cout << it1->first << " " << it1->second << endl;
+				}
+			}
 		}
-		
 	}
 }
 
 void HandleConnection::unsubscribe(const std::vector<string> &params, Subscriber &client) {
 	for(const auto &param : params) {
 		auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == param;} );
-		auto postionClient = find_if(clients.begin(), clients.end(), [=](Subscriber s){ return s.getSocket() == client.getSocket();} );
-		if(it != rooms.end())
-			Unsubscribe(*it, std::distance(clients.begin(), postionClient)+1);
+		auto room = it->Name();
+		auto socket = client.getSocket();
+		if(it != rooms.end()) {
+			for(auto it1 = tokens[room].begin(); it1 != tokens[room].end(); ++it1) {
+				if(it1->first == socket) {
+					Unsubscribe(*it, it1->second);
+					tokens[room].erase(it1);
+				}
+			}
+		}
 	}		
 }
 
@@ -96,12 +117,6 @@ void HandleConnection::handleCommand(const string &command, const std::vector<st
 	
 	if("subscribe"  == command) {
 		subscribe(params, client);
-		cout << "\n===============tokens=============" << endl;		
-		for(auto token : tokens)
-		{
-			for(auto t : token.second)
-				std::cout << token.first << " " << t.first << " " << t.second << "\n";
-		}	
 	}
 	else if("unsubscribe" == command) {
 		unsubscribe(params, client);

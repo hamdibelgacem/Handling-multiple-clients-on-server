@@ -22,7 +22,7 @@ public:
 	fd_set readfds;
 	Socket *masterSocket;
 	std::vector<Publisher> rooms;
-	std::map<int, std::map<string, long>> tokens;
+	std::map<string, std::map<int, long>> tokens;
 
 	HandleConnection(Socket *master);
 	//~HandleConnection();
