@@ -39,7 +39,6 @@ public:
 		for_each(callbacks_.begin(), callbacks_.end(), Callback(pSender, args));
 	}
 	long Subscribe(function<void(void*, const EventArgs&)> f) {
-		cout << "Call Subscribe in Event "<< endl;
 		token_++;
 		callbacks_.insert(make_pair(token_, f));
 		return token_;
@@ -69,9 +68,8 @@ public:
 
 class Subscriber {
 	int socket_;
-	static int count;
 public:
-	explicit Subscriber(const int& socket) : socket_(socket){count++; showInstanceCount();}
+	explicit Subscriber(const int& socket) : socket_(socket){}
 	int get_socket() const {return socket_;}
 	void OnEventReceived(void* pSender, const EventArgs& args) {
 		const StringEventArgs* const s = dynamic_cast<const StringEventArgs* const>(&args);
@@ -83,18 +81,11 @@ public:
 		cout << socket_ << " has received " << s->Payload().c_str() << " from " << p->Name().c_str() << endl;
 		send(socket_, s->Payload().c_str(), s->Payload().size() + 1, 0);
 	}
-	static void showInstanceCount()
-    {
-      cout << "MyClass instance count: " << count << endl;
-    }
-	//cout << "!!!!!!!!!!!!!!!  socket id !!!!!!!!! " << get_socket();
-	//friend void subscriberHasReceivedMessage(Subscriber subscribe, ) {}
 };
 
 namespace {
 	using namespace std::placeholders;
 	long Subscribe(Publisher& publisher, Subscriber& subscriber) {
-		cout << "Call Subscribe in namesapce "<< endl;
 		return publisher.Register(bind(&Subscriber::OnEventReceived, &subscriber, _1, _2));
 	}
 	void Unsubscribe(Publisher& publisher, long token) {

@@ -1,7 +1,5 @@
 #include "HandleConnection.h"
 
-int Subscriber::count = 0;
-
 HandleConnection::HandleConnection(Socket *master) : masterSocket(master) {}
 
 int HandleConnection::selectClient() {
@@ -52,48 +50,33 @@ void HandleConnection::addClient() {
 	if (FD_ISSET(masterSocket->sock, &readfds))   
 	{   
 		Socket *newSocket = masterSocket->accept();
-		cout << "Socket ID : " << newSocket->sock << endl;
 		// Adding client to Clients list.
 		int socket = newSocket->sock;
 		Subscriber subscriber(socket);
 		clients.push_back(subscriber);
 		cout << "after push sub : " << endl;
-		for(auto client : clients)
-			cout << "Socket id " << client.get_socket() << "\t";
 	}	
 }
 
 void HandleConnection::subscribe(const std::vector<string> &params, Subscriber &client) {
-	cout << " ************ socket id in subscriber :" << client.get_socket() << endl;
-	for(auto param : params) {
-		if(!this->isRoomCreated(param)) {
-			this->addRoom(param);
+	cout << "HandleConnection::subscribe" << endl;
+	for(const auto & param : params) {
+		if(!isRoomCreated(param)) {
+			cout << "------- room " << param << " is not created ------ " << param << endl;
+			addRoom(param);
 		} else {
-			cout<<"Room is created "<<param<<endl;
+			cout<<"------- Room "<< param << " is created -------- "<<param<<endl;
 		}
 		
 		auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == param;} );
-		cout << "-------- publisher in subscriber fun : " << it->Name() << endl;
 		if(it != rooms.end())
 			Subscribe(*it, client);
 	}
-	
-	cout << "Socket id after Subscribe_Pub-Sub ";
-	for(auto client : clients)
-		cout << "Socket id : " << client.get_socket() << "\t";
-	cout << endl;
 }
 
 void HandleConnection::echo(const std::vector<string> &params) {
 	auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == params[0];} );
-	cout<<"before Publish : "<<endl;
-	for(auto client : clients)
-		cout << "Socket id : " << client.get_socket() << "\t";
-	cout << "-------- publisher in echo func : " << it->Name() << endl;
 	it->Publish("12");
-	cout<<"after Publish"<<endl;
-			for(auto client : clients)
-			cout << "Socket id after publish: " << client.get_socket() << endl;	
 }
 
 void HandleConnection::handleCommand(const string &command, const std::vector<string> &params, Subscriber &client) {
@@ -115,8 +98,6 @@ void HandleConnection::handleCommand(const string &command, const std::vector<st
 	else if (command == "echo") {
 		echo(params);
 	}
-			for(auto client : clients)
-			cout << "Socket id after lambda: " << client.get_socket() << endl;
 	/*
 	auto what = commands.find(command);
 	if (what == commands.end()) {
@@ -125,32 +106,6 @@ void HandleConnection::handleCommand(const string &command, const std::vector<st
 		auto success = (what->second)(params);
 		std::cout << (success ? "success" : "failure") << std::endl;
     }*/
-}
-
-void HandleConnection::splitCommands(char *buffer, string &command, std::vector<string> &params) {
-
-	// handle client commands
-	ostringstream ss;
-	ss << buffer;
-    std::string input_string = ss.str();
-    	
-	vector<string> splits;
-	char delimiter = ' ';
-
-	size_t i = 0;
-	size_t pos = input_string.find(delimiter);
-	command = input_string.substr(i, pos - i);
-	i = pos + 1;
-	pos = input_string.find(delimiter, i);
-	
-	while (pos != string::npos) {
-		params.push_back(input_string.substr(i, pos - i));
-
-		i = pos + 1;
-		pos = input_string.find(delimiter, i);
-	}
-
-	params.push_back(input_string.substr(i, min(pos, input_string.length()) - i + 1));        
 }
 
 void HandleConnection::receiveMessage() {
@@ -176,24 +131,28 @@ void HandleConnection::receiveMessage() {
 			else 
 			{
 				int outSock = client.get_socket();
-				if(outSock != masterSocket->sock) {
 					/*
 					 * handle connection : 
 					 * split commands(command + params)
 					 * run commands (subscribe, unsubscribe, silnce, sine, echo)
 					 *  
 					 */
-					std::string command;
+				
+					using action_arguments = std::vector<std::string>;
+					
+					std::string input_string(buffer);
+					std::string delims = " \n";
+					action_arguments arguments = split(input_string, delims);
+					
+					std::string command = arguments[0];
 					action_arguments params;
-					splitCommands(buffer, command, params); // split command and params
+		
+					for (int i = 1; i < arguments.size(); ++i) {
+						params.push_back(arguments[i]);
+					}
 					
-					handleCommand(command, params, client); // check is valid command ?
-					
-					// 
-					for(auto client : clients)
-						cout << "Socket id after handleCommand: " << client.get_socket() << " ";
-					 
-				}
+					handleCommand(command, params, client); // handle is valid command ?
+				
 			}   
 		}   
 	} 	
@@ -202,9 +161,14 @@ void HandleConnection::receiveMessage() {
 
 void HandleConnection::addRoom(const string &name) {
 	rooms.push_back(Publisher(name));
-	cout << "Room " << name << " created" << endl;
-}
+	cout << "Rooms " << name << " created" << endl;
+	cout << "*********rooms*******:" <<endl;
+	for(auto room : rooms)
+		cout << "-----------room : " << room.Name() << " ---------- " <<endl;
+}	
 
 bool HandleConnection::isRoomCreated(const string &name) {
-	return (find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == name;}) != rooms.end());
+	cout << "---------- check room " << name << " is created " << endl;
+	auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == name;});
+	return (it != rooms.end());
 }
