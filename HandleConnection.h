@@ -9,7 +9,7 @@
 #include <functional>
 
 #include "Socket.h"
-#include "pub-sub.cpp"
+#include "pub-sub.h"
 #include "split.h"
 
 const int BUFSIZE {4096};

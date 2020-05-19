@@ -1,25 +1,11 @@
-#pragma once 
+#include "pub-sub.h"
+ 
+EventArgs::~EventArgs() {}
 
-#include <iostream>
-#include <map>
-#include <algorithm>
-#include <functional>
-#include <memory>
+StringEventArgs::StringEventArgs(const string& payload) : payload_(payload) {}
+const string& StringEventArgs::Payload() const { return payload_; }
 
-using namespace std;
-
-class EventArgs {
-public:
-	virtual ~EventArgs() {}
-};
-
-class StringEventArgs : public EventArgs {
-	string payload_;
-public:
-	explicit StringEventArgs(const string& payload) : payload_(payload) {}
-	const string& Payload() const { return payload_; }
-};
-
+/*
 class Event {
 	class Callback {
 		void* pSender_;
@@ -47,7 +33,47 @@ public:
 		callbacks_.erase(token);
 	}
 };
+*/
 
+/*
+Event::Callback::Callback(void* pSender, const EventArgs& args) : pSender_(pSender), args_(args) {}
+
+void Event::Callback::operator()(pair<long, function<void(void*, const EventArgs&)>> p) const {
+	p.second(pSender_, args_);
+}
+*/
+
+void Event::operator ()(void* pSender, const EventArgs& args) const {
+	for_each(callbacks_.begin(), callbacks_.end(), Callback(pSender, args));
+}
+
+long Event::Subscribe(function<void(void*, const EventArgs&)> f) {
+	token_++;
+	callbacks_.insert(make_pair(token_, f));
+	return token_;
+}
+
+void Event::Unsubscribe(long token) {
+	callbacks_.erase(token);
+}
+
+Publisher::Publisher(const string& name) : name_(name) {}
+
+const string& Publisher::Name() const { return name_; }
+
+void Publisher::Publish(const string& message) {
+	event_(this, StringEventArgs(message));
+}
+
+long Publisher::Register(function<void(void*, const EventArgs&)> f) {
+	return event_.Subscribe(f);
+}
+
+void Publisher::Unregister(long token) {
+	event_.Unsubscribe(token);
+}
+
+/*
 class Publisher {
 	Event event_;
 	string name_;
@@ -65,12 +91,26 @@ public:
 		event_.Unsubscribe(token);
 	}
 };
+*/
 
+Subscriber::Subscriber(const int& socket) : socket_(socket){}
+int Subscriber::getSocket() const {return socket_;}
+void Subscriber::OnEventReceived(void* pSender, const EventArgs& args) {
+	const StringEventArgs* const s = dynamic_cast<const StringEventArgs* const>(&args);
+	if (s == nullptr)
+		return;
+	if (pSender == nullptr)
+		return;
+	Publisher* p = static_cast<Publisher*>(pSender);
+	cout << "Subscriber with Socket ID=" << socket_ << " has received " << s->Payload().c_str() << " from " << p->Name().c_str() << endl;
+	send(socket_, s->Payload().c_str(), s->Payload().size() + 1, 0);
+}
+/*
 class Subscriber {
 	int socket_;
 public:
 	explicit Subscriber(const int& socket) : socket_(socket){}
-	int get_socket() const {return socket_;}
+	int getSocket() const {return socket_;}
 	void OnEventReceived(void* pSender, const EventArgs& args) {
 		const StringEventArgs* const s = dynamic_cast<const StringEventArgs* const>(&args);
 		if (s == nullptr)
@@ -78,12 +118,13 @@ public:
 		if (pSender == nullptr)
 			return;
 		Publisher* p = static_cast<Publisher*>(pSender);
-		cout << socket_ << " has received " << s->Payload().c_str() << " from " << p->Name().c_str() << endl;
+		cout << "Subscriber with Socket ID=" << socket_ << " has received " << s->Payload().c_str() << " from " << p->Name().c_str() << endl;
 		send(socket_, s->Payload().c_str(), s->Payload().size() + 1, 0);
 	}
 };
+*/
 
-namespace {
+namespace PubSub {
 	using namespace std::placeholders;
 	long Subscribe(Publisher& publisher, Subscriber& subscriber) {
 		return publisher.Register(bind(&Subscriber::OnEventReceived, &subscriber, _1, _2));
@@ -93,14 +134,7 @@ namespace {
 	}
 }
 
-class Subscription {
-	Publisher& publisher_;
-	long token_;
-
-public:
-	Subscription(Publisher& publisher, long token) : publisher_(publisher), token_(token) {
-	}
-	~Subscription() {
+Subscription::Subscription(Publisher& publisher, long token) : publisher_(publisher), token_(token) {}
+Subscription::~Subscription() {
 		publisher_.Unregister(token_);
-	}
-};
+}
