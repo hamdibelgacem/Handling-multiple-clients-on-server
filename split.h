@@ -1,5 +1,4 @@
-#ifndef __SPLIT_H
-#define __SPLIT_H
+#pragma once 
 
 // functions to split a string by a specific delimiter
 #include <string>
@@ -19,4 +18,3 @@ std::vector<std::string>  split(const std::string &s, char delim);
 std::vector<std::string>& split(const std::string &s, const std::string& delims, std::vector<std::string> &elems);
 std::vector<std::string>  split(const std::string &s, const std::string& delims);
 
-#endif
