@@ -27,12 +27,13 @@ int HandleConnection::selectClient() {
 	
 	if (ret < 0)
 	{   
-		cerr << "select error" << endl;
+		cerr << "Select Error" << endl;
 	} 
 	
 	return ret; 	
 }
 
+// Todo
 void HandleConnection::disconnect() {
 	auto it = clients.begin();
 	while(it != clients.end()) {
@@ -59,35 +60,41 @@ void HandleConnection::addClient() {
 void HandleConnection::subscribe(const std::vector<string> &params, Subscriber &client) {
 	for(const auto & param : params) {
 		if(!isRoomCreated(param)) {
-			cout << "------- room " << param << " is not created ------ " << endl;
+			cout << "Room " << param << " is not created" << endl;
 			addRoom(param);
 		} else {
-			cout<<"------- Room "<< param << " is created -------- "<<param<<endl;
+			cout<<"Room "<< param << " is created"<< endl;
 		}
 		
 		auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == param;} );
 		if(it != rooms.end()) {
 			auto room = it->Name();
-			long token = Subscribe(*it, client);
-			cout << "Publisher name =" << room << " token = " << token << endl;
+			auto socket = client.getSocket();
+			for(auto it1 = tokens[room].begin(); it1 != tokens[room].end(); ++it1) {
+				if(it1->first == socket)
+					return;
+			}
+			long token = PubSub::Subscribe(*it, client);
+			cout << "New Subscriber with Socket ID = "<< client.getSocket() <<" in room " << room << endl;
 			std::map<int, long> pubTokens;
 			pubTokens.insert(make_pair(client.getSocket(), token));
 			for(map<int,long>::const_iterator eptr=pubTokens.begin();eptr != pubTokens.end(); eptr++)
-				cout << "pubTokens : " << eptr->first << "  " << eptr->second << endl;
-			
+				cout << "pubTokens : " << eptr->first << "  " << eptr->second << endl; 
 			
 			if(tokens.find(room) != tokens.end()) {
 				tokens[room][client.getSocket()] = token;
 			}
 			tokens.insert(make_pair(it->Name(), pubTokens));
 			
-			cout << "=============== tokens in subscribe =============" << endl;
+			/*
+			cout << "=============== tokens =============" << endl;
 			for( map<string, map<int,long> >::const_iterator it = tokens.begin(); it != tokens.end(); it++) {
 				cout << it->first << "  ";
 				for( map<int,long>::const_iterator it1 = it->second.begin(); it1 != it->second.end(); it1++){
 					cout << it1->first << " " << it1->second << endl;
 				}
 			}
+			*/
 		}
 	}
 }
@@ -100,7 +107,8 @@ void HandleConnection::unsubscribe(const std::vector<string> &params, Subscriber
 		if(it != rooms.end()) {
 			for(auto it1 = tokens[room].begin(); it1 != tokens[room].end(); ++it1) {
 				if(it1->first == socket) {
-					Unsubscribe(*it, it1->second);
+					PubSub::Unsubscribe(*it, it1->second);
+					cout << "Unsubscribe Client with Socket ID = " << socket << " from room"<< room << endl;
 					tokens[room].erase(it1);
 				}
 			}
@@ -109,8 +117,10 @@ void HandleConnection::unsubscribe(const std::vector<string> &params, Subscriber
 }
 
 void HandleConnection::echo(const std::vector<string> &params) {
-	auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == params[0];} );
-	it->Publish("123");
+	for(const auto &param : params) {
+		auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == param;} );
+			it->Publish("----------Test Message----------\n");
+	}
 }
 
 void HandleConnection::handleCommand(const string &command, const std::vector<string> &params, Subscriber &client) {
@@ -159,13 +169,8 @@ void HandleConnection::receiveMessage() {
 				using action_arguments = std::vector<std::string>;
 				std::string delims = " ";	//delimater : " " and "\n".
 				action_arguments arguments;
-				stringstream s;
-				s << buffer;
-				string input_string = s.str();
-				input_string.erase( std::remove(input_string.begin(), input_string.end(), '\n'), input_string.end() );
-				input_string.erase( std::remove(input_string.begin(), input_string.end(), '\r'), input_string.end() );
 				
-				arguments = split(input_string, " \n");
+				arguments = split(buffer, delims);
 				
 				std::string command;
 				action_arguments params;
@@ -185,7 +190,7 @@ void HandleConnection::receiveMessage() {
 
 void HandleConnection::addRoom(const string &name) {
 	rooms.push_back(Publisher(name));
-	cout << "Rooms " << name << " created" << endl;
+	cout << "Create room " << name << endl;
 	cout << "*********rooms*******:" <<endl;
 	for(auto room : rooms)
 		cout << "-----------room:" << room.Name() << "---------- " <<endl;

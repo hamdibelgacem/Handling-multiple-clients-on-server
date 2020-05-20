@@ -12,18 +12,21 @@
 #include "pub-sub.h"
 #include "split.h"
 
+// Size of buffer.
 const int BUFSIZE {4096};
 
 using namespace std;
 
-class HandleConnection {
-public:
-	std::list<Subscriber> clients;
-	fd_set readfds;
-	Socket *masterSocket;
-	std::vector<Publisher> rooms;
-	std::map<string, std::map<int, long>> tokens;
+typedef std::map<int, long> TokenMap;
 
+class HandleConnection {
+	std::list<Subscriber> clients;		// List of clients each clients.
+	fd_set readfds;						// List of ready files descriptors.
+	Socket *masterSocket;				// Socket master it's the server socket.
+	std::vector<Publisher> rooms;		// List of rooms.
+	std::map<string, TokenMap> tokens; 	// Store Subscribers tokens.
+
+public:
 	HandleConnection(Socket *master);
 	//~HandleConnection();
 	int selectClient();

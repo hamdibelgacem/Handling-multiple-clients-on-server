@@ -23,12 +23,16 @@ std::vector<std::string> &split(const std::string &s, const std::string& delims,
     while (tok != NULL) {
         elems.push_back(tok);
         tok = strtok(NULL, delims.c_str());
-    }
-    
+    }   
     return elems;
 }
 
 std::vector<std::string> split(const std::string &s, const std::string& delims) {
+	stringstream ss;
+	ss << s;
+	string input_string = ss.str();
+	input_string.erase( std::remove(input_string.begin(), input_string.end(), '\n'), input_string.end() );
+	input_string.erase( std::remove(input_string.begin(), input_string.end(), '\r'), input_string.end() );
     std::vector<std::string> elems;
-    return split(s, delims, elems);
+    return split(input_string, delims, elems);
 }
