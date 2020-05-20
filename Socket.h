@@ -42,5 +42,4 @@ public:
     int set_non_blocking();
     int socket_shutdown(int how);
     void close();
-    static string ipFromHostName(string hostname);
 };

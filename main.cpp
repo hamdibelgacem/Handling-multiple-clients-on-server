@@ -3,44 +3,47 @@
 
 #include "Socket.h"
 #include "HandleConnection.h"
-#include "pub-sub.cpp"
 
 using namespace std;
 
 int main(int argc, char **argv) {
     string ip = "localhost";
-    string port = "8888";
-    Socket *masterSocket = new Socket(AF_INET,SOCK_STREAM,0); //AF_INET (Internet mode) SOCK_STREAM (TCP mode) 0 (Protocol any)
+    string defaultPort = "8888";
+    //string port = defaultPort;
+    
+    string port = argv[2] ? argv[2] : defaultPort;
+    
+    // Create the server socket AF_INET (Internet mode) SOCK_STREAM (TCP mode) 0 (Protocol any)
+    Socket *masterSocket = new Socket(AF_INET,SOCK_STREAM,0);
     int optVal = 1;
     
     masterSocket->socket_set_opt(SOL_SOCKET, SO_REUSEADDR, &optVal);
-    masterSocket->bind(ip, port); //Bind socket on localhost:8888
+    
+    //Bind socket on ip:port
+    masterSocket->bind(ip, port);
 
-    masterSocket->listen(10); //Start listening for incoming connections (maximum of 10 Connections in Queue)
+    //Start listening for incoming connections (maximum of 10 Connections in Queue).
+    masterSocket->listen(10); 
 	
+	// Handling the connections between server and clinets. 
 	HandleConnection connection(masterSocket);
    
     while (true) { 
+		
+		// Select waiting until one or more of the file descriptors become "ready"
 		connection.selectClient();
+		
+		// If file descriptor ready i.e will have to added in list of readfds.
+		// And added this client into clients list and identify by Socket ID.
 		connection.addClient();
+		
+		// Handling of messages received.
 		connection.receiveMessage();
     }
     
-	/*
-	Publisher room1("room1");
-	Publisher room2("room2");
-	Subscriber sub_1(1);
-	Subscriber sub_2(2);
-	
-	long token_1 = Subscribe(room1, sub_1);
-	long token_2 = Subscribe(room1, sub_2);
-
-	room1.Publish("123");
-	Unsubscribe(room1, token_1);
-	room1.Publish("1234");
-	room2.Publish("321");
-	*/
+    // Suhtdown master socket and close masterSocket.
     masterSocket->socket_shutdown(2);
-    masterSocket->close();    
+    masterSocket->close();
+    
     return 0;
 }

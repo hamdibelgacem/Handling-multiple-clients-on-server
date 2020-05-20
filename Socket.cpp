@@ -1,8 +1,7 @@
 #include "Socket.h"
 
-Socket::Socket(){
-    
-}
+Socket::Socket(){}
+
 Socket::Socket(int domain, int type, int protocol)
 {
     memset(&address_info, 0, sizeof address_info);
@@ -193,16 +192,4 @@ int Socket::socket_shutdown(int how){
 
 void Socket::close(){
     ::close(sock);
-}
-
-string Socket::ipFromHostName(string hostname){
-    hostent * record = gethostbyname(hostname.c_str());
-    if(record == NULL)
-    {
-        cerr << "Is unavailable: " << hostname << endl;
-        exit(1);
-    }
-    in_addr * address = (in_addr * )record->h_addr;
-    string ip_address = inet_ntoa(* address);
-    return ip_address;
 }
