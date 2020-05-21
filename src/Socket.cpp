@@ -124,10 +124,13 @@ Socket* Socket::accept(){
     newSocket->address_info.ai_family = their_addr.ss_family;
     newSocket->address_info.ai_addr = (struct sockaddr *)&their_addr;
 
-    //send new connection greeting message  
+    //send new connection greeting message
+    #if 0
     string welcomeMsg = "Welcome to chat room!\r\n"; 
     send(newsock, welcomeMsg.c_str(), welcomeMsg.size() + 1, 0);
     cout << "Welcome message sent successfully" << endl;
+    #endif
+    
     return newSocket;
 }
 

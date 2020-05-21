@@ -9,7 +9,7 @@ using namespace std;
 SilentAudioChunk::SilentAudioChunk(double samplingRate, double duration):
 AudioChunk(samplingRate, duration)
 {
-	cout << "Create a new SilentAudioChunk" << endl;
+	cout << "Create a new SilentAudioChunk : " << endl;
 	this->samplesBuffer = new uint16_t[7];
 	this->samplesBuffer[0] = 0x000E;
 }
@@ -31,9 +31,7 @@ void SilentAudioChunk::genrate_samples()
 
 	this->samplesBuffer[3] = 0x0000;
 	this->samplesBuffer[4] = 0x0004;
-	cout << "before " << hex << this->samplesNumber << endl;
 	uint32_t x = (this->samplesNumber & 0xFFFF0000) >> 16 |  (this->samplesNumber & 0x0000FFFF) << 16;
-	cout << "after " << hex << x << endl;
 	memcpy(samplesBuffer+5, &x, 4);
 }
 

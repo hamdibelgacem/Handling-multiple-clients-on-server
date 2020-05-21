@@ -61,10 +61,9 @@ void SineWaveAudioChunk::genrate_samples()
 {
 	double t = 0;
 	this->samplesBuffer[0] = samplesNumber;
-	for (unsigned int i = 1; i < samplesNumber; i++){
+	for (unsigned int i = 1; i <= samplesNumber; i++){
 		this->samplesBuffer[i] = this->amplitude * sin(2 * M_PI * this->frequency * t + this->phase);
-		t += 1/this->samplingRate;
+		t = t+  ((double) 1/this->samplingRate);
 	}
-	cout << "generate sine wave !!" << endl;
 }
 

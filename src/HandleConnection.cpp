@@ -1,5 +1,7 @@
 #include "HandleConnection.h"
-#include <bitset>
+
+const double samplingRate = 8000; // sample rate = 8kHz (PCM-16 format)
+
 // Constructor
 HandleConnection::HandleConnection(Socket *master) : masterSocket(master) {}
 
@@ -23,7 +25,7 @@ int HandleConnection::selectClient() {
 			 
 		//highest file descriptor number, need it for the select function  
 		if(sd > max_sd)   
-			max_sd = sd; 			
+			max_sd = sd; 
 	}
 	
 	//wait for an activity on one of the sockets , timeout is 10 sec
@@ -58,7 +60,7 @@ void HandleConnection::addClient() {
 		int socket = newSocket->sock;
 		Subscriber subscriber(socket);
 		clients.push_back(subscriber);
-	}	
+	}
 }
 
 void HandleConnection::subscribe(const std::vector<string> &params, Subscriber &client) {
@@ -92,7 +94,7 @@ void HandleConnection::subscribe(const std::vector<string> &params, Subscriber &
 			}
 			tokens.insert(make_pair(it->Name(), pubTokens));
 			
-			
+			#if 0
 			cout << "=============== tokens =============" << endl;
 			for( map<string, map<int,long> >::const_iterator it = tokens.begin(); it != tokens.end(); it++) {
 				cout << it->first << "  ";
@@ -100,6 +102,7 @@ void HandleConnection::subscribe(const std::vector<string> &params, Subscriber &
 					cout << it1->first << " " << it1->second << endl;
 				}
 			}
+			#endif
 			
 		}
 	}
@@ -144,33 +147,30 @@ void HandleConnection::silence(const std::vector<string> &params, const Subscrib
 	
 	if(!params.empty()) { 
 		char * eptr;
-		double duration = strtod(params[0].c_str(), &eptr);
-		cout << "duration :-----" << duration << "-----" << endl;
-		SilentAudioChunk silent(8000, duration);
+		double duration = strtod(params[0].c_str(), &eptr)/1000;
+		SilentAudioChunk silent(samplingRate, duration);
 		
 		silent.genrate_samples();
 		auto silence_buffer = silent.getSamplesBuffer();
 		
+		
 		for (int i = 0; i < 7; i++){
 			cout << std::hex <<silence_buffer[i];
 		}
-		cout << "\n";
+		cout << endl;
+		
 		for(unsigned int i = 1; i  < params.size(); ++i) {
-			cout << " silence for each room" << endl;
 			auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == params[i];} );
 			auto room = it->Name();
 			auto socket = client.getSocket();
 			if(it != rooms.end()) {
-				cout << "room existed in subscribers list should be publish" << endl;
 				for(auto it1 = tokens[room].begin(); it1 != tokens[room].end(); ++it1) {
 					if(it1->first == socket) {
-						cout << "Publish audio chunk of silence wave: "<< silence_buffer << endl;
+						cout << "Publish silent wave audio chunk"<< endl;
 						for (int i = 0; i < 7; i++){
-							std::bitset<16> x(silence_buffer[i]);
-							cout << "Published word " << x.to_ulong() << endl; 
 							it->Publish(silence_buffer[i]);
 						}
-						
+						cout << "Subscriber with Socket ID=" << socket << " has received silent audio chunk from " << room << endl;
 					}
 				}
 			}
@@ -182,9 +182,8 @@ void HandleConnection::silence(const std::vector<string> &params, const Subscrib
 
 void HandleConnection::sine(const std::vector<string> &params, const Subscriber &client) {
 	if(params.size() > 3) { 
-		double samplingRate = 8;
 		char *eptr;
-		double duration = strtod(params[0].c_str(), &eptr);
+		double duration = strtod(params[0].c_str(), &eptr)/1000; // en seconds
 		uint32_t frequency = atoi(params[1].c_str());
 		double amplitude = strtod(params[2].c_str(), &eptr);
 		double phase = M_PI/2;
@@ -192,25 +191,22 @@ void HandleConnection::sine(const std::vector<string> &params, const Subscriber 
 		SineWaveAudioChunk sin(samplingRate, duration, amplitude, frequency, phase);
 		
 		sin.genrate_samples();
-		auto sinWaveBuffer = sin.getSamplesBuffer();
+		auto sineBuffer = sin.getSamplesBuffer();
+		sin.printBuffer();
 		
-		for (int i = 0; i < 7; i++){
-			cout << std::hex <<sinWaveBuffer[i];
-		}
-		
-		cout << "\n";
-		for(unsigned int i = 1; i  < rooms.size(); ++i) {
+		for(unsigned int i = 1; i  < params.size(); ++i) {
 			auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == params[i];} );
 			auto room = it->Name();
 			auto socket = client.getSocket();
 			if(it != rooms.end()) {
+				auto room = it->Name();
 				for(auto it1 = tokens[room].begin(); it1 != tokens[room].end(); ++it1) {
 					if(it1->first == socket) {
-						cout << "Publish audio chunk of sine wave : "<< sinWaveBuffer << endl;
-						stringstream msg;
-						msg << sinWaveBuffer;
-						string sinPublish = msg.str();
-						//it->Publish(sinPublish);
+						cout << "Publish sine wave audio chunk"<< endl;
+						for (unsigned int i = 0; i <= sin.getSamplesNumber(); i++){
+							it->Publish(sineBuffer[i]);
+						}
+						cout << "Subscriber with Socket ID=" << socket << " has received sine audio chunk from " << room << endl;
 					}
 				}
 			}
@@ -285,9 +281,11 @@ void HandleConnection::receiveMessage() {
 void HandleConnection::addRoom(const string &name) {
 	rooms.push_back(Publisher(name));
 	cout << "Create room " << name << endl;
+	#if 0
 	cout << "=============rooms==============" <<endl;
 	for(auto room : rooms)
 		cout << "-----room : " << room.Name() << "-----" <<endl;
+	#endif
 }	
 
 bool HandleConnection::isRoomCreated(const string &name) {

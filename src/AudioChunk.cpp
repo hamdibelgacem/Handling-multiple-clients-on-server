@@ -11,7 +11,7 @@ samplesNumber(samplingRate * duration),
 samplesBuffer(NULL)
 {
 	cout << "Create a new Empty Audio chunk, with sampling rate = "
-         << samplingRate << "and duration = " << duration << endl;
+         << samplingRate << "Hz and duration = " << duration << "s" << endl;
 }
 
 AudioChunk::~AudioChunk()
@@ -81,9 +81,12 @@ void AudioChunk::TruncateBuffer(double startTime, double endTime)
 	this->samplesBuffer[0]=j;
 }
 
+
 void AudioChunk::printBuffer()
 {
-	for (unsigned int i = 0; i < this->samplesNumber; i++){
-		cout << "0x" << hex << this->samplesBuffer[i];
+	for (unsigned int i = 0; i <= this->samplesNumber; i++){
+		cout << std::hex << this->samplesBuffer[i];
 	}
+	
+	cout << endl;
 }

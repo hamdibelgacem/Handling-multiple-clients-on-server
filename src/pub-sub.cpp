@@ -3,11 +3,7 @@
 
 EventArgs::~EventArgs() {}
 
-StringEventArgs::StringEventArgs(const uint16_t& payload) : payload_(payload){
-	/*payload_ = new uint16_t[1];
-	payload_[0] = payload;
-	cout << "payload_[0] " << payload_[0] << endl;*/
-}
+StringEventArgs::StringEventArgs(const uint16_t& payload) : payload_(payload){}
 
 const uint16_t StringEventArgs::Payload() const { return payload_; }
 
@@ -51,14 +47,7 @@ void Subscriber::OnEventReceived(void* pSender, const EventArgs& args) {
 	if (pSender == nullptr)
 		return;
 	Publisher* p = static_cast<Publisher*>(pSender);
-	cout << "Subscriber with Socket ID=" << socket_ << " has received " << s->Payload() << " from " << p->Name().c_str() << endl;
-	//stringstream ss;
-	//ss << s->Payload();
-	//string buf = ss.str();
-	//send(socket_, (char*)s->Payload(), 2, 0);
-	cout << hex << " s->Payload " << s->Payload() << endl;
 	uint16_t x= htons(s->Payload()); 	
-	cout << hex << " x " << x << endl;
 	write(socket_, &x, 2);
 }
 
