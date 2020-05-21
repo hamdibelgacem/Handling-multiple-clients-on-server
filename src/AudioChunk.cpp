@@ -4,7 +4,7 @@
 using namespace std;
 
 
-AudioChunk::AudioChunk(uint32_t samplingRate, uint32_t duration) : 
+AudioChunk::AudioChunk(double samplingRate, double duration) : 
 samplingRate(samplingRate),
 duration(duration),
 samplesNumber(samplingRate * duration),
@@ -12,21 +12,6 @@ samplesBuffer(NULL)
 {
 	cout << "Create a new Empty Audio chunk, with sampling rate = "
          << samplingRate << "and duration = " << duration << endl;
-}
-
-AudioChunk::AudioChunk(uint32_t samplingRate, uint32_t samplesNumber, 
-		               uint16_t * samplesBuffer) : 
-samplingRate(samplingRate),
-samplesNumber(samplesNumber),
-duration(samplesNumber/samplingRate)
-
-{
-	cout << "Create a new Empty Audio chunk, with sampling rate = "
-         << samplingRate << "and duration = " << duration << endl;
-    //first word will store the audio chunk length
-	this->samplesBuffer = new uint16_t[this->samplesNumber+1];
-	this->samplesBuffer[0]=(2*this->samplesNumber)+1;
-	memcpy(this->samplesBuffer+1, samplesBuffer, samplesNumber);
 }
 
 AudioChunk::~AudioChunk()
@@ -37,22 +22,22 @@ AudioChunk::~AudioChunk()
 	}
 }
 
-uint32_t AudioChunk::getSamplingRate()
+double AudioChunk::getSamplingRate()
 {
 	return (this->samplingRate);
 }
 
-void AudioChunk::setSamplingRate(uint32_t samplingRate)
+void AudioChunk::setSamplingRate(double samplingRate)
 {
 	this->samplingRate = samplingRate;
 }
 
-uint32_t AudioChunk::getDuration()
+double AudioChunk::getDuration()
 {
 	return (this->duration);
 }
 
-void AudioChunk::setDuration(uint32_t duration)
+void AudioChunk::setDuration(double duration)
 {
 	this->duration = duration;
 	this->samplesNumber = this->samplingRate*this->duration;
@@ -63,16 +48,28 @@ uint32_t AudioChunk::getSamplesNumber()
 	return(this->samplesNumber);
 }
 
-void AudioChunk::setSamplesNumber()
+void AudioChunk::setSamplesNumber(uint32_t samplesNumber)
 {
 	this->samplesNumber = samplesNumber;
 	this->duration = this->samplesNumber/this->samplingRate;
 }
 
-void AudioChunk::TruncateBuffer(uint32_t startTime, uint32_t endTime)
+uint16_t * AudioChunk::getSamplesBuffer()
+{
+	return(this->samplesBuffer);
+}
+
+void AudioChunk::setSamplesBuffer(double samplesNumber, uint16_t * samplesBuffer)
+{
+	this->samplesBuffer = new uint16_t[this->samplesNumber+1];
+	this->samplesBuffer[0]=(2*this->samplesNumber)+1;
+	memcpy(this->samplesBuffer+1, samplesBuffer, samplesNumber);
+}
+
+void AudioChunk::TruncateBuffer(double startTime, double endTime)
 {
 	double t = 0;
-	int i = 1, j = 0;
+	unsigned int i = 1, j = 0;
 	while (i < this->samplesNumber && t <endTime) {
 		if (t >= startTime) {
 			j++;
@@ -86,7 +83,7 @@ void AudioChunk::TruncateBuffer(uint32_t startTime, uint32_t endTime)
 
 void AudioChunk::printBuffer()
 {
-	for (int i = 0; i < this->samplesNumber; i++){
+	for (unsigned int i = 0; i < this->samplesNumber; i++){
 		cout << "0x" << hex << this->samplesBuffer[i];
 	}
 }

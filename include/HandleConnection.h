@@ -7,9 +7,14 @@
 #include <map>
 #include <list>
 #include <functional>
+#include <memory>
+#include "cmath"
 
 #include "Socket.h"
 #include "pub-sub.h"
+#include "SilentAudioChunk.h"
+#include "SineWaveAudioChunk.h"
+#include "AudioChunk.h"
 #include "split.h"
 
 // Size of buffer.
@@ -22,23 +27,23 @@ typedef std::map<int, long> TokenMap;
 class HandleConnection {
 	std::list<Subscriber> clients;		// List of clients each clients.
 	fd_set readfds;						// List of ready files descriptors.
-	Socket *masterSocket;				// Socket master it's the server socket.
+	Socket* masterSocket; 				// Socket master it's the server socket.
 	std::vector<Publisher> rooms;		// List of rooms.
 	std::map<string, TokenMap> tokens; 	// Store Subscribers tokens.
 
 public:
-	HandleConnection(Socket *master);
+	HandleConnection(Socket* master);
 	//~HandleConnection();
 	int selectClient();
 	void addClient();
-	void disconnect();
 	void receiveMessage();
 	void handleCommand(const string &command, const std::vector<string> &params, Subscriber &client);
 	void addRoom(const string &name);
 	bool isRoomCreated(const string &name);
 	void subscribe(const std::vector<string> &params, Subscriber &client);
 	void unsubscribe(const std::vector<string> &params, Subscriber &client);
-	void sine();
-	void silence();
-	void echo(const std::vector<string> &params);
+	void sine(const std::vector<string> &params, const Subscriber &client);
+	void silence(const std::vector<string> &params, const Subscriber &client);
+	void echo(const std::vector<string> &params, const Subscriber &client);
+	void disconnect();
 };

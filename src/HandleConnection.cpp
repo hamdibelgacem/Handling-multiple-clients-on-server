@@ -1,6 +1,10 @@
 #include "HandleConnection.h"
-
+#include <bitset>
+// Constructor
 HandleConnection::HandleConnection(Socket *master) : masterSocket(master) {}
+
+// Destructor
+//HandleConnection::~HandleConnection()
 
 int HandleConnection::selectClient() {
 	struct timeval tv;
@@ -78,15 +82,17 @@ void HandleConnection::subscribe(const std::vector<string> &params, Subscriber &
 			cout << "New Subscriber with Socket ID = "<< client.getSocket() <<" in room " << room << endl;
 			std::map<int, long> pubTokens;
 			pubTokens.insert(make_pair(client.getSocket(), token));
-			for(map<int,long>::const_iterator eptr=pubTokens.begin();eptr != pubTokens.end(); eptr++)
+			
+			/*for(map<int,long>::const_iterator eptr=pubTokens.begin();eptr != pubTokens.end(); eptr++)
 				cout << "pubTokens : " << eptr->first << "  " << eptr->second << endl; 
+			*/
 			
 			if(tokens.find(room) != tokens.end()) {
 				tokens[room][client.getSocket()] = token;
 			}
 			tokens.insert(make_pair(it->Name(), pubTokens));
 			
-			/*
+			
 			cout << "=============== tokens =============" << endl;
 			for( map<string, map<int,long> >::const_iterator it = tokens.begin(); it != tokens.end(); it++) {
 				cout << it->first << "  ";
@@ -94,7 +100,7 @@ void HandleConnection::subscribe(const std::vector<string> &params, Subscriber &
 					cout << it1->first << " " << it1->second << endl;
 				}
 			}
-			*/
+			
 		}
 	}
 }
@@ -116,15 +122,104 @@ void HandleConnection::unsubscribe(const std::vector<string> &params, Subscriber
 	}		
 }
 
-void HandleConnection::echo(const std::vector<string> &params) {
+void HandleConnection::echo(const std::vector<string> &params, const Subscriber &client) {
+	
 	for(const auto &param : params) {
 		auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == param;} );
-			it->Publish("----------Test Message----------\n");
+		auto room = it->Name();
+		auto socket = client.getSocket();
+		if(it != rooms.end()) {
+			for(auto it1 = tokens[room].begin(); it1 != tokens[room].end(); ++it1) {
+				if(it1->first == socket) {
+					cout << "Test echo"<< room << endl;
+					it->Publish(12);
+				}
+			}
+		}
+		
+	}
+}
+
+void HandleConnection::silence(const std::vector<string> &params, const Subscriber &client) {
+	
+	if(!params.empty()) { 
+		char * eptr;
+		double duration = strtod(params[0].c_str(), &eptr);
+		cout << "duration :-----" << duration << "-----" << endl;
+		SilentAudioChunk silent(8000, duration);
+		
+		silent.genrate_samples();
+		auto silence_buffer = silent.getSamplesBuffer();
+		
+		for (int i = 0; i < 7; i++){
+			cout << std::hex <<silence_buffer[i];
+		}
+		cout << "\n";
+		for(unsigned int i = 1; i  < params.size(); ++i) {
+			cout << " silence for each room" << endl;
+			auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == params[i];} );
+			auto room = it->Name();
+			auto socket = client.getSocket();
+			if(it != rooms.end()) {
+				cout << "room existed in subscribers list should be publish" << endl;
+				for(auto it1 = tokens[room].begin(); it1 != tokens[room].end(); ++it1) {
+					if(it1->first == socket) {
+						cout << "Publish audio chunk of silence wave: "<< silence_buffer << endl;
+						for (int i = 0; i < 7; i++){
+							std::bitset<16> x(silence_buffer[i]);
+							cout << "Published word " << x.to_ulong() << endl; 
+							it->Publish(silence_buffer[i]);
+						}
+						
+					}
+				}
+			}
+			
+		}
+	}
+}
+
+
+void HandleConnection::sine(const std::vector<string> &params, const Subscriber &client) {
+	if(params.size() > 3) { 
+		double samplingRate = 8;
+		char *eptr;
+		double duration = strtod(params[0].c_str(), &eptr);
+		uint32_t frequency = atoi(params[1].c_str());
+		double amplitude = strtod(params[2].c_str(), &eptr);
+		double phase = M_PI/2;
+
+		SineWaveAudioChunk sin(samplingRate, duration, amplitude, frequency, phase);
+		
+		sin.genrate_samples();
+		auto sinWaveBuffer = sin.getSamplesBuffer();
+		
+		for (int i = 0; i < 7; i++){
+			cout << std::hex <<sinWaveBuffer[i];
+		}
+		
+		cout << "\n";
+		for(unsigned int i = 1; i  < rooms.size(); ++i) {
+			auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == params[i];} );
+			auto room = it->Name();
+			auto socket = client.getSocket();
+			if(it != rooms.end()) {
+				for(auto it1 = tokens[room].begin(); it1 != tokens[room].end(); ++it1) {
+					if(it1->first == socket) {
+						cout << "Publish audio chunk of sine wave : "<< sinWaveBuffer << endl;
+						stringstream msg;
+						msg << sinWaveBuffer;
+						string sinPublish = msg.str();
+						//it->Publish(sinPublish);
+					}
+				}
+			}
+			
+		}
 	}
 }
 
 void HandleConnection::handleCommand(const string &command, const std::vector<string> &params, Subscriber &client) {
-	
 	if("subscribe"  == command) {
 		subscribe(params, client);
 	}
@@ -132,13 +227,13 @@ void HandleConnection::handleCommand(const string &command, const std::vector<st
 		unsubscribe(params, client);
 	}
 	else if ("sine" == command) {
-		//sine();
+		sine(params, client);
 	}
 	else if("silence" == command) {
-		//silence();
+		silence(params, client);
 	}
 	else if("echo" == command) {
-		echo(params);
+		echo(params, client);
 	}
 	else {
 		cout << "command not found !" << endl;
@@ -166,17 +261,16 @@ void HandleConnection::receiveMessage() {
 			//Handle the commands and echo back the message that came in.
 			else
 			{
-				using action_arguments = std::vector<std::string>;
+				std::vector<std::string> arguments;
 				std::string delims = " ";	//delimater : " " and "\n".
-				action_arguments arguments;
 				
 				arguments = split(buffer, delims);
-				
 				std::string command;
-				action_arguments params;
+				std::vector<std::string> params;
+				
 				if(!arguments.empty()) {
 					command = arguments[0];
-					for (int i = 1; i < arguments.size(); ++i) {
+					for (unsigned int i = 1; i < arguments.size(); ++i) {
 						params.push_back(arguments[i]);
 					}
 				}
@@ -191,9 +285,9 @@ void HandleConnection::receiveMessage() {
 void HandleConnection::addRoom(const string &name) {
 	rooms.push_back(Publisher(name));
 	cout << "Create room " << name << endl;
-	cout << "*********rooms*******:" <<endl;
+	cout << "=============rooms==============" <<endl;
 	for(auto room : rooms)
-		cout << "-----------room:" << room.Name() << "---------- " <<endl;
+		cout << "-----room : " << room.Name() << "-----" <<endl;
 }	
 
 bool HandleConnection::isRoomCreated(const string &name) {

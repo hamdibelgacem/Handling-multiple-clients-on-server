@@ -2,11 +2,13 @@
 
 #include <iostream>
 #include <string>
+#include <sstream> 
 #include <algorithm>
 #include <map>
 #include <functional>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 using namespace std;
 
@@ -17,10 +19,10 @@ public:
 };
 
 class StringEventArgs : public EventArgs {
-	std::string payload_;
+	uint16_t payload_;
 public:
-	explicit StringEventArgs(const string& payload);
-	const string& Payload() const;
+	explicit StringEventArgs(const uint16_t& payload);
+	const uint16_t Payload() const;
 };
 
 class Event {
@@ -50,7 +52,7 @@ class Publisher {
 public:
 	explicit Publisher(const string& name);
 	const string& Name() const;
-	void Publish(const string& message);
+	void Publish(const uint16_t& message);
 	long Register(function<void(void*, const EventArgs&)> f);
 	void Unregister(long token);
 };

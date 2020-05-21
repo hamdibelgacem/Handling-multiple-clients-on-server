@@ -8,13 +8,16 @@ using namespace std;
 
 int main(int argc, char **argv) {
     string ip = "localhost";
-    string defaultPort = "8888";
-    //string port = defaultPort;
     
-    string port = argv[2] ? argv[2] : defaultPort;
+    if(argc < 2)
+    {
+		cout << "No port provided" << endl;
+	}
+    // portNum is for storing port number on which the accepts connections
+    string port = argv[2];
     
-    // Create the server socket AF_INET (Internet mode) SOCK_STREAM (TCP mode) 0 (Protocol any)
-    Socket *masterSocket = new Socket(AF_INET,SOCK_STREAM,0);
+    // Create the server socket 
+    Socket *masterSocket = new Socket(AF_INET,SOCK_STREAM,0); //AF_INET (Internet mode) SOCK_STREAM (TCP mode) 0 (Protocol any)
     int optVal = 1;
     
     masterSocket->socket_set_opt(SOL_SOCKET, SO_REUSEADDR, &optVal);

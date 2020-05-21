@@ -6,11 +6,12 @@
 
 using namespace std;
 
-SilentAudioChunk::SilentAudioChunk(uint32_t samplingRate, uint32_t duration) : AudioChunk(samplingRate, duration)
+SilentAudioChunk::SilentAudioChunk(double samplingRate, double duration):
+AudioChunk(samplingRate, duration)
 {
 	cout << "Create a new SilentAudioChunk" << endl;
 	this->samplesBuffer = new uint16_t[7];
-	this->samplesBuffer[0] = 14;
+	this->samplesBuffer[0] = 0x000E;
 }
 
 SilentAudioChunk::~SilentAudioChunk()
@@ -22,7 +23,7 @@ SilentAudioChunk::~SilentAudioChunk()
 void SilentAudioChunk::genrate_samples()
 {
 	//Write the length of the Audio chunk in the fisrt byte
-	this->samplesBuffer[0] = 0x14;
+	this->samplesBuffer[0] = 0x000E;
 
 	//Write ehe ASCII character string "slnt" in the first 2 words = chunkid
 	this->samplesBuffer[1] = 0x736c; //"sl"
@@ -30,13 +31,10 @@ void SilentAudioChunk::genrate_samples()
 
 	this->samplesBuffer[3] = 0x0000;
 	this->samplesBuffer[4] = 0x0004;
-	this->samplesBuffer[5] = this->samplesNumber;
-}
-void SilentAudioChunk::printSilent()
-{
-	for (int i = 0; i < 7; i++){
-		cout << std::hex <<this->samplesBuffer[i]<<" ";
-	}
+	cout << "before " << hex << this->samplesNumber << endl;
+	uint32_t x = (this->samplesNumber & 0xFFFF0000) >> 16 |  (this->samplesNumber & 0x0000FFFF) << 16;
+	cout << "after " << hex << x << endl;
+	memcpy(samplesBuffer+5, &x, 4);
 }
 
 #endif // __SILENTAUDIOCHUNK_H__

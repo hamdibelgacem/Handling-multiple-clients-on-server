@@ -4,11 +4,11 @@
 
 using namespace std;
 
-SineWaveAudioChunk::SineWaveAudioChunk(uint32_t samplingRate,
-                                       uint32_t duration,
-                                       uint32_t amplitude,
+SineWaveAudioChunk::SineWaveAudioChunk(double samplingRate,
+                                       double duration,
+                                       double amplitude,
                                        uint32_t frequency,
-                                       uint32_t phase):
+                                       double phase):
 AudioChunk(samplingRate,duration),
 amplitude(amplitude),
 frequency(frequency),
@@ -27,12 +27,12 @@ SineWaveAudioChunk::~SineWaveAudioChunk()
 
 }
 
-uint32_t SineWaveAudioChunk::getamplitude()
+double SineWaveAudioChunk::getamplitude()
 {
 	return(this->amplitude);
 }
 
-void SineWaveAudioChunk::setamplitude(uint32_t amplitude)
+void SineWaveAudioChunk::setamplitude(double amplitude)
 {
 	this->amplitude = amplitude;
 }
@@ -47,12 +47,12 @@ void SineWaveAudioChunk::setfrequency(uint32_t amplitude)
 	this->frequency = frequency;
 }
 
-uint32_t SineWaveAudioChunk::getphase()
+double SineWaveAudioChunk::getphase()
 {
 	return(this->amplitude);
 }
 
-void SineWaveAudioChunk::setphase(uint32_t)
+void SineWaveAudioChunk::setphase(double phase)
 {
 	this->phase = phase;
 }
@@ -61,7 +61,7 @@ void SineWaveAudioChunk::genrate_samples()
 {
 	double t = 0;
 	this->samplesBuffer[0] = samplesNumber;
-	for (int i = 1; i < samplesNumber; i++){
+	for (unsigned int i = 1; i < samplesNumber; i++){
 		this->samplesBuffer[i] = this->amplitude * sin(2 * M_PI * this->frequency * t + this->phase);
 		t += 1/this->samplingRate;
 	}

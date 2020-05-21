@@ -8,9 +8,8 @@
 
 class SilentAudioChunk : public AudioChunk {
 public :
-	SilentAudioChunk(uint32_t samplingRate, uint32_t duration);
+	SilentAudioChunk(double samplingRate, double duration);
 	~SilentAudioChunk();
 	void genrate_samples();
-    void printSilent();
 };
 #endif // __SILENTWAVEAUDIOCHUNK_H__

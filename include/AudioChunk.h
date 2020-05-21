@@ -6,33 +6,33 @@
 
 class AudioChunk{
 protected :
-		uint16_t * samplesBuffer;
 		uint32_t samplingRate;
 		uint32_t duration;
 		uint32_t samplesNumber;
+		uint16_t * samplesBuffer;
 public :
 		//Creates an empty AudioChunk
-		AudioChunk(uint32_t samplingRate, uint32_t duration);
-		//Creates an AudioChunk and Manually Fill the AudioChunk from a samplesBuffer
-		AudioChunk(uint32_t samplingRate, uint32_t samplesNumber, uint16_t * samplesBuffer);
+		AudioChunk(double samplingRate, double duration);
 		//Destructor for freeing samplesBuffer
 		~AudioChunk();
 		//Getter for AudioChunk samplingRate
-		uint32_t getSamplingRate();
+		double getSamplingRate();
 		//Setter for AudioChunk samplingRate
-		void setSamplingRate(uint32_t);
+		void setSamplingRate(double);
 		//Getter for AudioChunk SamplesNumber
 		uint32_t getSamplesNumber();
 		//Setter for AudioChunk setSamplesNumber
-		void setSamplesNumber();
-		//Getter for AudioChunk duration
-		uint32_t getDuration();
-		//Setter for AudioChunk duration
-		void setDuration(uint32_t);
-		//Setter for AudioChunk duration
 		void setSamplesNumber(uint32_t);
+		//Getter for AudioChunk duration
+		double getDuration();
+		//Setter for AudioChunk duration
+		void setDuration(double);
+		//Getter for AudioChunk SamplesBuffer
+		uint16_t * getSamplesBuffer();
+		//Setter for AudioChunk SamplesBuffer
+		void setSamplesBuffer(double samplesNumber, uint16_t * samplesBuffer);
 		//Truncate the AudioChunk samplesBuffer
-		void TruncateBuffer(uint32_t startTime, uint32_t endTime);
+		void TruncateBuffer(double startTime, double endTime);
 		//Display the AudioChunk samplesBuffer
 		void printBuffer();
 };
