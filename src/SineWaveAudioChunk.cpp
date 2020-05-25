@@ -17,7 +17,7 @@ phase(phase)
 	cout << "Create a new Sinwave Audio chunk, with amplitude = "
          << amplitude << ", frequency = " << frequency 
          << ", phase = " << phase << endl;
-	this->samplesBuffer = new uint16_t[this->samplesNumber+1];
+	this->samplesBuffer.resize(this->samplesNumber + 1);
 	this->samplesBuffer[0]=(2*this->samplesNumber)+1;
 }
 

@@ -3,13 +3,15 @@
 
 #include <cstdint>
 #include <cstring>
+#include <memory>
+#include <vector>
 
 class AudioChunk{
 protected :
-		uint32_t samplingRate;
-		uint32_t duration;
+		double samplingRate;
+		double duration;
 		uint32_t samplesNumber;
-		uint16_t * samplesBuffer;
+		std::vector<uint16_t> samplesBuffer;
 public :
 		//Creates an empty AudioChunk
 		AudioChunk(double samplingRate, double duration);
@@ -28,9 +30,9 @@ public :
 		//Setter for AudioChunk duration
 		void setDuration(double);
 		//Getter for AudioChunk SamplesBuffer
-		uint16_t * getSamplesBuffer();
+		std::vector<uint16_t> getSamplesBuffer();
 		//Setter for AudioChunk SamplesBuffer
-		void setSamplesBuffer(double samplesNumber, uint16_t * samplesBuffer);
+		void setSamplesBuffer(double samplesNumber, std::vector<uint16_t> samplesBuffer);
 		//Truncate the AudioChunk samplesBuffer
 		void TruncateBuffer(double startTime, double endTime);
 		//Display the AudioChunk samplesBuffer

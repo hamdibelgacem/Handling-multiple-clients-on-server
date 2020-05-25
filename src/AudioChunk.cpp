@@ -8,7 +8,7 @@ AudioChunk::AudioChunk(double samplingRate, double duration) :
 samplingRate(samplingRate),
 duration(duration),
 samplesNumber(samplingRate * duration),
-samplesBuffer(NULL)
+samplesBuffer(samplesNumber + 1)
 {
 	cout << "Create a new Empty Audio chunk, with sampling rate = "
          << samplingRate << "Hz and duration = " << duration << "s" << endl;
@@ -16,10 +16,7 @@ samplesBuffer(NULL)
 
 AudioChunk::~AudioChunk()
 {
-	if (this->samplesBuffer){
-		delete[] this->samplesBuffer;
-		this->samplesBuffer=NULL;
-	}
+	this->samplesBuffer.clear();
 }
 
 double AudioChunk::getSamplingRate()
@@ -54,16 +51,16 @@ void AudioChunk::setSamplesNumber(uint32_t samplesNumber)
 	this->duration = this->samplesNumber/this->samplingRate;
 }
 
-uint16_t * AudioChunk::getSamplesBuffer()
+std::vector<uint16_t> AudioChunk::getSamplesBuffer()
 {
 	return(this->samplesBuffer);
 }
 
-void AudioChunk::setSamplesBuffer(double samplesNumber, uint16_t * samplesBuffer)
-{
-	this->samplesBuffer = new uint16_t[this->samplesNumber+1];
-	this->samplesBuffer[0]=(2*this->samplesNumber)+1;
-	memcpy(this->samplesBuffer+1, samplesBuffer, samplesNumber);
+void AudioChunk::setSamplesBuffer(double samplesNumber, std::vector<uint16_t> samplesBuffer)
+{	
+	this->samplesBuffer[0] = (2*this->samplesNumber) + 1;	
+	std::copy(samplesBuffer.begin() + 1, samplesBuffer.end(), (this->samplesBuffer).begin());
+	
 }
 
 void AudioChunk::TruncateBuffer(double startTime, double endTime)
@@ -87,6 +84,5 @@ void AudioChunk::printBuffer()
 	for (unsigned int i = 0; i <= this->samplesNumber; i++){
 		cout << std::hex << this->samplesBuffer[i];
 	}
-	
 	cout << endl;
 }
