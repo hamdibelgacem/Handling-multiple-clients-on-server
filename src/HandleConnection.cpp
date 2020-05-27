@@ -153,9 +153,9 @@ void HandleConnection::silence(const std::vector<string> &params, const Subscrib
 		silent.genrate_samples();
 		auto silence_buffer = silent.getSamplesBuffer();
 		
-		
+			
 		for (int i = 0; i < 7; i++){
-			cout << std::hex <<silence_buffer[i];
+			cout << std::hex << std::hex << setw(4) << setfill('0') << silence_buffer[i];
 		}
 		cout << endl;
 		
@@ -167,11 +167,6 @@ void HandleConnection::silence(const std::vector<string> &params, const Subscrib
 				for(auto it1 = tokens[room].begin(); it1 != tokens[room].end(); ++it1) {
 					if(it1->first == socket) {
 						cout << "Publish silent wave audio chunk"<< endl;
-						/*
-						for (int i = 0; i < 7; i++){
-							it->Publish(silence_buffer[i]);
-						}
-						*/
 						it->Publish(silence_buffer);
 						cout << "Subscriber with Socket ID=" << socket << " has received silent audio chunk from " << room << endl;
 					}
@@ -206,11 +201,6 @@ void HandleConnection::sine(const std::vector<string> &params, const Subscriber 
 				for(auto it1 = tokens[room].begin(); it1 != tokens[room].end(); ++it1) {
 					if(it1->first == socket) {
 						cout << "Publish sine wave audio chunk"<< endl;
-						/*
-						for (unsigned int i = 0; i <= sin.getSamplesNumber(); i++){
-							//it->Publish(sineBuffer[i]);
-						}
-						*/
 						it->Publish(sineBuffer);
 						cout << "Subscriber with Socket ID=" << socket << " has received sine audio chunk from " << room << endl;
 					}

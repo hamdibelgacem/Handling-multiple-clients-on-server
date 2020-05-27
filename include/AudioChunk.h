@@ -1,10 +1,12 @@
 #ifndef __AUDIOCHUNK_H__
 #define __AUDIOCHUNK_H__
 
+#include "iostream"
 #include <cstdint>
 #include <cstring>
 #include <memory>
 #include <vector>
+#include <iomanip>      // std::setw
 
 class AudioChunk{
 protected :
