@@ -6,15 +6,15 @@
 class SineWaveAudioChunk : public AudioChunk {
 	private : 
 		double amplitude;
-		uint32_t frequency;
+		double frequency;
 		double phase;
 	public :
-		SineWaveAudioChunk(double samplingRate, double duration, double amplitude, uint32_t frequency, double phase);
+		SineWaveAudioChunk(double samplingRate, double duration, double amplitude, double frequency, double phase);
 		~SineWaveAudioChunk();
 		double getamplitude();
 		void setamplitude(double);
-		uint32_t getfrequency();
-		void setfrequency(uint32_t);
+		double getfrequency();
+		void setfrequency(double);
 		double getphase();
 		void setphase(double);
 		void genrate_samples();

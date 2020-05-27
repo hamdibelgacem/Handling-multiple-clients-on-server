@@ -7,7 +7,7 @@ using namespace std;
 SineWaveAudioChunk::SineWaveAudioChunk(double samplingRate,
                                        double duration,
                                        double amplitude,
-                                       uint32_t frequency,
+                                       double frequency,
                                        double phase):
 AudioChunk(samplingRate,duration),
 amplitude(amplitude),
@@ -37,12 +37,12 @@ void SineWaveAudioChunk::setamplitude(double amplitude)
 	this->amplitude = amplitude;
 }
 
-uint32_t SineWaveAudioChunk::getfrequency()
+double SineWaveAudioChunk::getfrequency()
 {
 	return(this->frequency);
 }
 
-void SineWaveAudioChunk::setfrequency(uint32_t amplitude)
+void SineWaveAudioChunk::setfrequency(double amplitude)
 {
 	this->frequency = frequency;
 }

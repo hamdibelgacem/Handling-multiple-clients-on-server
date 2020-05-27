@@ -155,7 +155,7 @@ void HandleConnection::silence(const std::vector<string> &params, const Subscrib
 		
 			
 		for (int i = 0; i < 7; i++){
-			cout << std::hex << std::hex << setw(4) << setfill('0') << silence_buffer[i];
+			cout << std::hex << setw(4) << setfill('0') << silence_buffer[i];
 		}
 		cout << endl;
 		
@@ -182,7 +182,7 @@ void HandleConnection::sine(const std::vector<string> &params, const Subscriber 
 	if(params.size() > 3) { 
 		char *eptr;
 		double duration = strtod(params[0].c_str(), &eptr)/1000; // en seconds
-		uint32_t frequency = atoi(params[1].c_str());
+		double frequency = strtod(params[1].c_str(), &eptr);
 		double amplitude = strtod(params[2].c_str(), &eptr);
 		double phase = M_PI/2;
 

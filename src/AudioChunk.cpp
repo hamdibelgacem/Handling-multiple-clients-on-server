@@ -82,7 +82,7 @@ void AudioChunk::TruncateBuffer(double startTime, double endTime)
 void AudioChunk::printBuffer()
 {
 	for (unsigned int i = 0; i <= this->samplesNumber; i++){
-		cout << std::hex << std::hex << setw(2) << setfill('0') << this->samplesBuffer[i];
+		cout << std::hex << setw(4) << setfill('0') << this->samplesBuffer[i];
 	}
 	cout << endl;
 }
