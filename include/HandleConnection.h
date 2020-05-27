@@ -8,6 +8,7 @@
 #include <list>
 #include <functional>
 #include <memory>
+#include <bitset>
 #include "cmath"
 
 #include "Socket.h"
@@ -25,14 +26,14 @@ using namespace std;
 typedef std::map<int, long> TokenMap;
 
 class HandleConnection {
-	std::list<Subscriber> clients;		// List of clients each clients.
-	fd_set readfds;						// List of ready files descriptors.
-	Socket* masterSocket; 				// Socket master it's the server socket.
-	std::vector<Publisher> rooms;		// List of rooms.
-	std::map<string, TokenMap> tokens; 	// Store Subscribers tokens.
+	std::list<Subscriber> clients;			// List of clients each clients.
+	fd_set readfds;							// List of ready files descriptors.
+	std::unique_ptr<Socket> masterSocket; 	// Socket master it's the server socket.
+	std::vector<Publisher> rooms;			// List of rooms.
+	std::map<string, TokenMap> tokens; 		// Store Subscribers tokens.
 
 public:
-	HandleConnection(Socket* master);
+	HandleConnection(std::unique_ptr<Socket> masterSocket);
 	//~HandleConnection();
 	int selectClient();
 	void addClient();

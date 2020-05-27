@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <memory>
 
 #include "Socket.h"
 #include "HandleConnection.h"
@@ -17,7 +18,7 @@ int main(int argc, char **argv) {
     string port = argv[2];
     
     // Create the server socket 
-    Socket *masterSocket = new Socket(AF_INET,SOCK_STREAM,0); //AF_INET (Internet mode) SOCK_STREAM (TCP mode) 0 (Protocol any)
+    std::unique_ptr<Socket> masterSocket{ std::make_unique<Socket>(AF_INET,SOCK_STREAM,0) }; //AF_INET (Internet mode) SOCK_STREAM (TCP mode) 0 (Protocol any)
     int optVal = 1;
     
     masterSocket->socket_set_opt(SOL_SOCKET, SO_REUSEADDR, &optVal);
@@ -29,7 +30,7 @@ int main(int argc, char **argv) {
     masterSocket->listen(10); 
 	
 	// Handling the connections between server and clinets. 
-	HandleConnection connection(masterSocket);
+	HandleConnection connection(std::move(masterSocket));
    
     while (true) { 
 		

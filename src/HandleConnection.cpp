@@ -3,7 +3,7 @@
 const double samplingRate = 8000; // sample rate = 8kHz (PCM-16 format)
 
 // Constructor
-HandleConnection::HandleConnection(Socket *master) : masterSocket(master) {}
+HandleConnection::HandleConnection(std::unique_ptr<Socket> master) : masterSocket(std::move(master)) {}
 
 // Destructor
 //HandleConnection::~HandleConnection()
@@ -117,7 +117,7 @@ void HandleConnection::unsubscribe(const std::vector<string> &params, Subscriber
 			for(auto it1 = tokens[room].begin(); it1 != tokens[room].end(); ++it1) {
 				if(it1->first == socket) {
 					PubSub::Unsubscribe(*it, it1->second);
-					cout << "Unsubscribe Client with Socket ID = " << socket << " from room"<< room << endl;
+					cout << "Unsubscribe Client with Socket ID = " << socket << " from room "<< room << endl;
 					tokens[room].erase(it1);
 				}
 			}
