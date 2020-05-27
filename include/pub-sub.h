@@ -5,6 +5,8 @@
 #include <sstream> 
 #include <algorithm>
 #include <map>
+#include <vector>
+
 #include <functional>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -19,10 +21,10 @@ public:
 };
 
 class StringEventArgs : public EventArgs {
-	uint16_t payload_;
+	std::vector<uint16_t> payload_;
 public:
-	explicit StringEventArgs(const uint16_t& payload);
-	const uint16_t Payload() const;
+	explicit StringEventArgs(const std::vector<uint16_t>& payload);
+	const std::vector<uint16_t> Payload() const;
 };
 
 class Event {
@@ -52,7 +54,7 @@ class Publisher {
 public:
 	explicit Publisher(const string& name);
 	const string& Name() const;
-	void Publish(const uint16_t& message);
+	void Publish(const std::vector<uint16_t>& message);
 	long Register(function<void(void*, const EventArgs&)> f);
 	void Unregister(long token);
 };

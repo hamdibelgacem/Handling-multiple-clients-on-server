@@ -3,9 +3,9 @@
 
 EventArgs::~EventArgs() {}
 
-StringEventArgs::StringEventArgs(const uint16_t& payload) : payload_(payload){}
+StringEventArgs::StringEventArgs(const std::vector<uint16_t>& payload) : payload_(payload){}
 
-const uint16_t StringEventArgs::Payload() const { return payload_; }
+const std::vector<uint16_t> StringEventArgs::Payload() const { return payload_; }
 
 
 void Event::operator ()(void* pSender, const EventArgs& args) const {
@@ -26,7 +26,7 @@ Publisher::Publisher(const string& name) : name_(name) {}
 
 const string& Publisher::Name() const { return name_; }
 
-void Publisher::Publish(const uint16_t& message) {
+void Publisher::Publish(const std::vector<uint16_t>& message) {
 	event_(this, StringEventArgs(message));
 }
 
@@ -46,9 +46,16 @@ void Subscriber::OnEventReceived(void* pSender, const EventArgs& args) {
 		return;
 	if (pSender == nullptr)
 		return;
-	Publisher* p = static_cast<Publisher*>(pSender);
-	uint16_t x= htons(s->Payload()); 	
-	write(socket_, &x, 2);
+	//Publisher* p = static_cast<Publisher*>(pSender);
+
+	std::vector<uint16_t> buffer = s->Payload();
+	
+	for(auto &elem : buffer)
+	{
+		elem = htons(elem);
+	}
+		
+	send(socket_, &buffer[0], buffer.size() * sizeof(uint16_t), 0);
 }
 
 namespace PubSub {

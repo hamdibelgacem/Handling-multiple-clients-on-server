@@ -135,7 +135,7 @@ void HandleConnection::echo(const std::vector<string> &params, const Subscriber 
 			for(auto it1 = tokens[room].begin(); it1 != tokens[room].end(); ++it1) {
 				if(it1->first == socket) {
 					cout << "Test echo"<< room << endl;
-					it->Publish(12);
+					//it->Publish(12);
 				}
 			}
 		}
@@ -167,9 +167,12 @@ void HandleConnection::silence(const std::vector<string> &params, const Subscrib
 				for(auto it1 = tokens[room].begin(); it1 != tokens[room].end(); ++it1) {
 					if(it1->first == socket) {
 						cout << "Publish silent wave audio chunk"<< endl;
+						/*
 						for (int i = 0; i < 7; i++){
 							it->Publish(silence_buffer[i]);
 						}
+						*/
+						it->Publish(silence_buffer);
 						cout << "Subscriber with Socket ID=" << socket << " has received silent audio chunk from " << room << endl;
 					}
 				}
@@ -203,9 +206,12 @@ void HandleConnection::sine(const std::vector<string> &params, const Subscriber 
 				for(auto it1 = tokens[room].begin(); it1 != tokens[room].end(); ++it1) {
 					if(it1->first == socket) {
 						cout << "Publish sine wave audio chunk"<< endl;
+						/*
 						for (unsigned int i = 0; i <= sin.getSamplesNumber(); i++){
-							it->Publish(sineBuffer[i]);
+							//it->Publish(sineBuffer[i]);
 						}
+						*/
+						it->Publish(sineBuffer);
 						cout << "Subscriber with Socket ID=" << socket << " has received sine audio chunk from " << room << endl;
 					}
 				}
