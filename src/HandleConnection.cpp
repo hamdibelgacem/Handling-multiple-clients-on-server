@@ -271,7 +271,10 @@ void HandleConnection::receiveMessage() {
 					}
 				}
 				
-				handleCommand(command, params, client); // handle command.
+				if(!command.empty())
+				{
+					handleCommand(command, params, client); // handle command.
+				}
 			}   
 		}   
 	} 	
