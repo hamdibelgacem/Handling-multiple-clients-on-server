@@ -34,7 +34,7 @@ class HandleConnection {
 
 public:
 	HandleConnection(std::unique_ptr<Socket> masterSocket);
-	//~HandleConnection();
+	~HandleConnection() = default;
 	int selectClient();
 	void addClient();
 	void receiveMessage();

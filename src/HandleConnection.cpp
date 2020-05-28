@@ -5,9 +5,6 @@ const double samplingRate = 8000; // sample rate = 8kHz (PCM-16 format)
 // Constructor
 HandleConnection::HandleConnection(std::unique_ptr<Socket> master) : masterSocket(std::move(master)) {}
 
-// Destructor
-//HandleConnection::~HandleConnection()
-
 int HandleConnection::selectClient() {
 	struct timeval tv;
 	int secondes = 10; // set timeout 10 sec
@@ -39,7 +36,7 @@ int HandleConnection::selectClient() {
 	return ret; 	
 }
 
-// Todo
+// Todo: remove client from list when client disconnect.
 void HandleConnection::disconnect() {
 	auto it = clients.begin();
 	while(it != clients.end()) {
@@ -126,20 +123,50 @@ void HandleConnection::unsubscribe(const std::vector<string> &params, Subscriber
 }
 
 void HandleConnection::echo(const std::vector<string> &params, const Subscriber &client) {
+	std::string buffer_recv = params[0];
+	std::vector<uint16_t> audio_data;
+	//cout << "buffer_recv : " << buffer_recv << endl;
 	
-	for(const auto &param : params) {
-		auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == param;} );
+	if(!buffer_recv.empty())
+	{
+		unsigned int i = 0;
+		while( i < buffer_recv.size())
+		{
+			uint16_t v =  std::stoi(buffer_recv.substr(i, 4), nullptr, 16);
+			audio_data.push_back(v);
+			i += 4;
+		}
+	}
+	
+	char * eptr;
+	double startTime = strtod(params[1].c_str(), &eptr)/1000; // time in s
+	double endTime = strtod(params[2].c_str(), &eptr)/1000; // time in s
+	
+	//cout << "\naudio_data : ";
+	//for(auto v : audio_data) cout << std::hex << setw(4) << setfill('0') << v;
+	
+	cout << endl;
+	AudioChunk audioChunk;
+	audioChunk.setSamplesNumber(audio_data.size()-1);
+	audioChunk.setSamplesBuffer(audio_data.size()-1 ,audio_data);
+	audioChunk.TruncateBuffer(startTime, endTime);
+	cout << "audio data after TrucateBuffer: " << endl;
+	audioChunk.printBuffer();
+	
+	auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == params[3];} );
+	auto socket = client.getSocket();
+	if(it != rooms.end())
+	{
 		auto room = it->Name();
-		auto socket = client.getSocket();
-		if(it != rooms.end()) {
-			for(auto it1 = tokens[room].begin(); it1 != tokens[room].end(); ++it1) {
-				if(it1->first == socket) {
-					cout << "Test echo"<< room << endl;
-					//it->Publish(12);
-				}
+		for(auto it1 = tokens[room].begin(); it1 != tokens[room].end(); ++it1)
+		{
+			if(it1->first == socket)
+			{
+				cout << "Publish truncate of audio audio chunk"<< endl;
+				it->Publish(audioChunk.getSamplesBuffer());
+				cout << "Subscriber with Socket ID=" << socket << " has received truncate of audio chunk from " << room << endl;
 			}
 		}
-		
 	}
 }
 
@@ -152,7 +179,6 @@ void HandleConnection::silence(const std::vector<string> &params, const Subscrib
 		
 		silent.genrate_samples();
 		auto silence_buffer = silent.getSamplesBuffer();
-		
 			
 		for (int i = 0; i < 7; i++){
 			cout << std::hex << setw(4) << setfill('0') << silence_buffer[i];
@@ -161,9 +187,9 @@ void HandleConnection::silence(const std::vector<string> &params, const Subscrib
 		
 		for(unsigned int i = 1; i  < params.size(); ++i) {
 			auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == params[i];} );
-			auto room = it->Name();
 			auto socket = client.getSocket();
 			if(it != rooms.end()) {
+				auto room = it->Name();
 				for(auto it1 = tokens[room].begin(); it1 != tokens[room].end(); ++it1) {
 					if(it1->first == socket) {
 						cout << "Publish silent wave audio chunk"<< endl;
@@ -172,7 +198,6 @@ void HandleConnection::silence(const std::vector<string> &params, const Subscrib
 					}
 				}
 			}
-			
 		}
 	}
 }
@@ -246,12 +271,16 @@ void HandleConnection::receiveMessage() {
 			memset(buffer, 0, BUFSIZE);
 			int bytesIn = recv(sd, buffer, BUFSIZE, 0);
 			if(bytesIn < 0) {
-				//::close(sd);   
+				cerr << "recv failed !" << endl;
+			}
+			else if (bytesIn == 0) // if recv returns zero, that means the connection has been closed
+			{
+				//removeClient
+				//sd.close();
 				//client.getSocket() = 0;
 			}
 				 
-			//Handle the commands and echo back the message that came in.
-			else
+			else  //Handle the commands and echo back the message that came in.
 			{
 				std::vector<std::string> arguments;
 				std::string delims = " ";	//delimater : " " and "\n".
