@@ -1,6 +1,7 @@
 #ifndef __SILENTWAVEAUDIOCHUNK_H__
 #define __SILENTWAVEAUDIOCHUNK_H__
 
+#include "iostream"
 #include <cstdint>
 #include <cstring>
 #include <sstream>

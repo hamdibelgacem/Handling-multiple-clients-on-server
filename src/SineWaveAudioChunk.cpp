@@ -1,6 +1,4 @@
-#include "iostream"
 #include "SineWaveAudioChunk.h"
-#include "cmath"
 
 using namespace std;
 

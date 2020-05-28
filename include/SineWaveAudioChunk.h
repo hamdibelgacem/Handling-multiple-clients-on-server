@@ -1,6 +1,9 @@
 #ifndef __SINEWAVEAUDIOCHUNK_H__
 #define __SINEWAVEAUDIOCHUNK_H__
 
+#include "iostream"
+#include "cmath"
+
 #include "AudioChunk.h"
 
 class SineWaveAudioChunk : public AudioChunk {

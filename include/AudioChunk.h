@@ -15,6 +15,8 @@ protected :
 		uint32_t samplesNumber;
 		std::vector<uint16_t> samplesBuffer;
 public :
+		//Default Constructor: Creates an empty AudioChunk with default values of samplingRate and  duration
+		AudioChunk();
 		//Creates an empty AudioChunk
 		AudioChunk(double samplingRate, double duration);
 		//Destructor for freeing samplesBuffer

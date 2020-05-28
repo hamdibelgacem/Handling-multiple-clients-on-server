@@ -2,6 +2,17 @@
 
 using namespace std;
 
+// set default samplingRate = 8kHz and default duration = 1s.
+
+AudioChunk::AudioChunk() : 
+samplingRate(8000),
+duration(0.1) ,
+samplesNumber(samplingRate * duration),
+samplesBuffer(samplesNumber + 1)
+{
+	cout << "Create a new Empty Audio chunk, with sampling rate = "
+		<< samplingRate << "Hz and duration = " << duration << "s" << endl;
+}
 
 AudioChunk::AudioChunk(double samplingRate, double duration) : 
 samplingRate(samplingRate),
@@ -16,7 +27,7 @@ samplesBuffer(samplesNumber + 1)
 AudioChunk::~AudioChunk()
 {
 	this->samplesBuffer.clear();
-	this->samplesNumber = 0;
+	//this->samplesNumber = 0;
 }
 
 double AudioChunk::getSamplingRate()
@@ -58,8 +69,8 @@ std::vector<uint16_t> AudioChunk::getSamplesBuffer()
 
 void AudioChunk::setSamplesBuffer(double samplesNumber, std::vector<uint16_t> samplesBuffer)
 {	
-	this->samplesBuffer[0] = (2*this->samplesNumber) + 1;	
-	std::copy(samplesBuffer.begin() + 1, samplesBuffer.end(), (this->samplesBuffer).begin());
+	//this->samplesBuffer[0] = (2*this->samplesNumber) + 1;	
+	std::copy(samplesBuffer.begin(), samplesBuffer.end(), (this->samplesBuffer).begin());
 	
 }
 
@@ -67,17 +78,19 @@ void AudioChunk::TruncateBuffer(double startTime, double endTime)
 {
 	double t = 0;
 	unsigned int i = 1, j = 0;
-	while (i < this->samplesNumber && t <endTime) {
+	while (i < this->samplesNumber && t < endTime) {
 		if (t >= startTime) {
 			j++;
-			this->samplesBuffer[j]=this->samplesBuffer[i];
+			this->samplesBuffer[j] = this->samplesBuffer[i];
 		}
-		i ++;
+		i++;
 		t += 1/this->samplingRate;
 	}
-	this->samplesBuffer[0]=j;
+	this->samplesBuffer[0] = j;
+	
+	this->samplesNumber = j;
+	this->samplesBuffer.erase(this->samplesBuffer.begin()+j+1, this->samplesBuffer.end());
 }
-
 
 void AudioChunk::printBuffer()
 {

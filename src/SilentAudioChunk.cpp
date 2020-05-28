@@ -1,7 +1,3 @@
-#ifndef __SILENTAUDIOCHUNK_H__
-#define __SILENTAUDIOCHUNK_H__
-
-#include "iostream"
 #include "SilentAudioChunk.h"
 
 using namespace std;
@@ -35,5 +31,3 @@ void SilentAudioChunk::genrate_samples()
 	this->samplesBuffer[5] = this->samplesNumber >> 16;
 	this->samplesBuffer[6] = this->samplesNumber &  0x0000FFFF;
 }
-
-#endif // __SILENTAUDIOCHUNK_H__
