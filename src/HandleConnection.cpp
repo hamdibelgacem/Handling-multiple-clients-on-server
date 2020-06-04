@@ -217,9 +217,8 @@ void HandleConnection::sine(const std::vector<string> &params, const Subscriber 
 		auto sineBuffer = sin.getSamplesBuffer();
 		sin.printBuffer();
 		
-		for(unsigned int i = 1; i  < params.size(); ++i) {
+		for(unsigned int i = 3; i  < params.size(); ++i) {
 			auto it = find_if(rooms.begin(), rooms.end(), [=](Publisher p){ return p.Name() == params[i];} );
-			auto room = it->Name();
 			auto socket = client.getSocket();
 			if(it != rooms.end()) {
 				auto room = it->Name();
@@ -230,8 +229,7 @@ void HandleConnection::sine(const std::vector<string> &params, const Subscriber 
 						cout << "Subscriber with Socket ID=" << socket << " has received sine audio chunk from " << room << endl;
 					}
 				}
-			}
-			
+			}	
 		}
 	}
 }
