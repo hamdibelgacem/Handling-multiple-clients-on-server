@@ -8,14 +8,16 @@
 using namespace std;
 
 int main(int argc, char **argv) {
-    string ip = "localhost";
     
-    if(argc < 2)
+    if(argc < 2) // We expect 2 arguments: the program name an port number.
     {
-		cout << "No port provided" << endl;
+		std::cerr << "Usage : " << argv[0] << " PORT" <<  endl;
 	}
+	
+	string ip = "localhost";
+	
     // portNum is for storing port number on which the accepts connections
-    string port = argv[2];
+    string port = argv[1];
     
     // Create the server socket 
     std::unique_ptr<Socket> masterSocket{ std::make_unique<Socket>(AF_INET,SOCK_STREAM,0) }; //AF_INET (Internet mode) SOCK_STREAM (TCP mode) 0 (Protocol any)

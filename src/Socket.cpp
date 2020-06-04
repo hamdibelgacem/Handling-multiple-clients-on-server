@@ -19,15 +19,23 @@ Socket::Socket(int domain, int type, int protocol)
 }
 
 int Socket::bind(string ip, string port){
-    if (address_info.ai_family == AF_UNIX) {
-        
+	
+	//check if port number is type int
+	for(int i = 0; i < port.length(); i++) 
+	{
+		if (isdigit(port[i]) == false) {
+			std::cerr << "The port number must be an integer" << endl;
+			exit(EXIT_FAILURE);
+		}
+	}
+	
+    if (address_info.ai_family == AF_UNIX) {    
         struct sockaddr_un addr;
         memset(&addr, 0, sizeof(addr));
         addr.sun_family = AF_UNIX;
         strncpy(addr.sun_path, ip.c_str(), sizeof(addr.sun_path)-1);
         int status = ::bind(sock, (struct sockaddr*)&addr, sizeof(addr));
         if (status < 0) {
-            //exit(1);
             cerr << "bind error: " << gai_strerror(errno) << endl;
         }
         return status;
