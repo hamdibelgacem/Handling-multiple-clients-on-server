@@ -234,24 +234,48 @@ void HandleConnection::sine(const std::vector<string> &params, const Subscriber 
 	}
 }
 
-void HandleConnection::handleCommand(const string &command, const std::vector<string> &params, Subscriber &client) {
-	if("subscribe"  == command) {
-		subscribe(params, client);
-	}
-	else if("unsubscribe" == command) {
-		unsubscribe(params, client);
-	}
-	else if ("sine" == command) {
-		sine(params, client);
-	}
-	else if("silence" == command) {
-		silence(params, client);
-	}
-	else if("echo" == command) {
-		echo(params, client);
-	}
-	else {
-		cout << "command not found !" << endl;
+void HandleConnection::handleCommand(const string &command, const std::vector<string> &params, Subscriber &client)
+{
+	using action_arguments = std::vector<std::string>;
+	std::map<std::string, std::function<bool(action_arguments const&)> > commands {
+		{"subscribe", [&](action_arguments const&)
+			{
+				subscribe(params, client);
+				return true;
+			}
+		},
+		{"unsubscribe", [&](action_arguments const&)
+			{
+				unsubscribe(params, client);
+				return true;
+			}
+		},
+		{"silence", [&](action_arguments const&)
+			{
+				silence(params, client);
+				return true;
+			}
+		},		
+		{"sine", [&](action_arguments const&)
+			{
+				sine(params, client);
+				return true;
+			}
+		},
+		{"echo", [&](action_arguments const&)
+			{
+				echo(params, client);
+				return true;
+			}
+		}	
+	};
+	
+	auto what = commands.find(command);
+	if (what == commands.end()) {
+		std::cout << "Command Not Found" << std::endl;
+	} else {
+		auto success = (what->second)(params);
+		//std::cout << (success ? "success" : "failure") << std::endl;
 	}
 }
 
